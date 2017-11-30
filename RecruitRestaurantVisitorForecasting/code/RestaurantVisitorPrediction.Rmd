@@ -1,0 +1,86 @@
+---
+title: "RestaurantVisitorPrediction.Rmd"
+author: "Subramanya"
+date: "11/30/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(data.table)
+library(dplyr)
+library(tibble)
+```
+
+```{r cache=TRUE}
+air_stores <- fread("../input/air_store_info.csv", data.table = FALSE, stringsAsFactors = TRUE)
+air_visits <- fread("../input/air_visit_data.csv", data.table = FALSE, stringsAsFactors = TRUE)
+air_reserve <- fread("../input/air_reserve.csv", data.table = FALSE, stringsAsFactors = TRUE)
+hpg_reserve <- fread("../input/hpg_reserve.csv", data.table = FALSE, stringsAsFactors = TRUE)
+hpg_stores <- fread("../input/hpg_store_info.csv", data.table = FALSE, stringsAsFactors = TRUE)
+store_mapping <- fread("../input/store_id_relation.csv", data.table = FALSE, stringsAsFactors = TRUE)
+holidays <- fread("../input/date_info.csv", data.table = FALSE, stringsAsFactors = TRUE)
+```
+
+## Dimensioning
+### Air Stores
+```{r}
+summary(air_stores)
+glimpse(air_stores)
+```
+
+### Air Visits
+```{r}
+summary(air_visits)
+glimpse(air_visits)
+```
+
+### Air Reserve
+```{r}
+summary(air_reserve)
+glimpse(air_reserve)
+```
+
+### HPG Reservations
+```{r}
+summary(hpg_reserve)
+glimpse(hpg_reserve)
+```
+
+### HPG Stores
+```{r}
+summary(hpg_stores)
+glimpse(hpg_stores)
+```
+
+### Store Mapping
+```{r}
+summary(store_mapping)
+glimpse(store_mapping)
+```
+
+### Holidays
+```{r}
+summary(holidays)
+glimpse(holidays)
+```
+
+## Data Manipulation
+#### Air Stores
+* Convert Genre Name & Store Id to Factor
+```{r}
+# Convert to Dates
+air_visits$visit_date <- ymd(air_visits$visit_date)
+air_reserve$reserve_datetime <- ymd_hms(air_reserve$reserve_datetime)
+air_reserve$visit_datetime <- ymd_hms(air_reserve$visit_datetime)
+
+hpg_reserve$reserve_datetime <- ymd_hms(hpg_reserve$reserve_datetime)
+hpg_reserve$visit_datetime <- ymd_hms(hpg_reserve$visit_datetime)
+holidays$calendar_date <- ymd(holidays$calendar_date)
+holidays$day_of_week <- weekdays(holidays$calendar_date)
+```
+
+* 
