@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(data.table)
 library(dplyr)
 library(tibble)
+library(tidyr)
+library(stringr)
+
+library(ggplot2)
 ```
 
 ```{r cache=TRUE}
@@ -23,6 +27,7 @@ hpg_reserve <- fread("../input/hpg_reserve.csv", data.table = FALSE, stringsAsFa
 hpg_stores <- fread("../input/hpg_store_info.csv", data.table = FALSE, stringsAsFactors = TRUE)
 store_mapping <- fread("../input/store_id_relation.csv", data.table = FALSE, stringsAsFactors = TRUE)
 holidays <- fread("../input/date_info.csv", data.table = FALSE, stringsAsFactors = TRUE)
+submission <- fread("../input/sample_submission.csv", data.table = FALSE, stringsAsFactors = TRUE)
 ```
 
 ## Dimensioning
@@ -68,6 +73,7 @@ summary(holidays)
 glimpse(holidays)
 ```
 
+
 ## Data Manipulation
 #### Air Stores
 * Convert Genre Name & Store Id to Factor
@@ -79,8 +85,63 @@ air_reserve$visit_datetime <- ymd_hms(air_reserve$visit_datetime)
 
 hpg_reserve$reserve_datetime <- ymd_hms(hpg_reserve$reserve_datetime)
 hpg_reserve$visit_datetime <- ymd_hms(hpg_reserve$visit_datetime)
+
 holidays$calendar_date <- ymd(holidays$calendar_date)
 holidays$day_of_week <- weekdays(holidays$calendar_date)
+
 ```
 
-* 
+### Submission
+```{r}
+dim(submission)
+head(submission)
+```
+Submission contains 32019 rows.
+
+Submission contains the data we need to predict - It contains Store IDs for which we have to predict Number of visitors on given days.  
+Currently, `store_id` and `date` are joined together in to one column called `id`. Lets split it in to `store_id` and `date`
+
+```{r}
+submission <- extract(data = submission, col = id, into = c("store_id", "date"), 
+                      regex = "(.{3}_.{16})_(\\d{4}-\\d{2}-\\d{2})")
+submission$store_id <- factor(submission$store_id)
+submission$date <- ymd(submission$date)
+```
+
+Check how many unique Store IDs are respresented for Submission
+
+```{r}
+unique_store_submissions <- unique(submission$store_id)
+unique_store_submissions_df <- as.data.frame(unique_store_submissions)
+names(unique_store_submissions_df) <- c("store_id")
+length(unique_store_submissions)
+```
+There are 821 stores for which we have to Predict the Visitor Data
+
+Check whether Store IDs are all `air` IDs or do they also contain `hpg` IDs
+```{r}
+unique(sapply(submission$store_id, function(x){str_extract(x, "(.{3})")}))
+```
+We see that all the Store IDs are `air` Ids
+
+What is the date range for which we have to predict?
+```{r}
+summary(submission$date)
+```
+
+We have to predict from 4/23 to 5/31 of 2017
+
+
+## Exploratory Data Analysis
+#### Store-wise
+#### 
+
+Lets try to compare how many of the Stores we have to predict is available in the data
+```{r}
+length(intersect(air_stores$air_store_id, unique_store_submissions))
+nrow(semi_join(unique_store_submissions_df, air_stores, by=c("store_id" = "air_store_id")))
+
+```
+Note that All 821 Unique stores we have to Submit data for are present in `air_stores`
+
+
